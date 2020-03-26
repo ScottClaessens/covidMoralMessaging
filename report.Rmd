@@ -1,0 +1,29 @@
+---
+title: "COVID-19 Moral Messaging: An Alternative Analysis"
+output: html_document
+---
+
+```{r options, echo=F}
+options(width = 500)
+```
+
+Recently, Everett _et al._ published a [pre-print](https://psyarxiv.com/9yqs8) studying the effects of different moral messages on US participants' intentions to engage in protective-behaviour relating to COVID-19. With many countries around the world transitioning into full-lockdown status, this work is timely and important. It is also a testament to the power of open science: important scientific ideas can be disseminated quickly and efficiently. As of 27th March 2020, the pre-print has been downloaded 832 times (since 21st March 2020).
+
+Another advantage of open science is that it immediately allows other researchers access to raw data to conduct alternative analyses. I report such an alternative analysis here. This alternative analysis builds on the previous work in a number of ways:
+
+* _I treat outcome variables as ordinal._ This is crucial because treating ordinal variables as continuous can [inflate effect size estimates](https://psyarxiv.com/x8swp/). As the effect sizes are small in the original pre-print, it is important to see whether the effects hold when using ordinal regression. This technique is also preferred to standard regression when there are ceiling or floor effects, as there are in this dataset.
+* _I model participants and questions as random effects._ In order to generalise beyond this specific sample and the specific questions asked in the study, we need to follow a [random effects approach](https://psyarxiv.com/jqw35). This approach can also easily scale up to multi-country studies, as it allows us to nest individuals within countries: this is the [next step](https://twitter.com/mollycrockett/status/1241038972895272968) for the original research team.
+
+But first, let's load the dataset in long-form.
+
+```{r}
+
+```
+
+
+# Session Info
+
+```{r}
+sessionInfo()
+```
+
