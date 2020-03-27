@@ -8,10 +8,19 @@ plan <- drake_plan(
   m3 = fitModel3(d),
   m4 = fitModel4(d),
   m5 = fitModel5(d),
-  # render report
+  # prepare report
+  response = responsePlot(d),
+  loo = looCompare(m1, m2, m3, m4),
+  int = intPlot(m4),
+  postShare = postSharePlot(m3),
+  a1 = above1(m3),
+  handWash = handWashPlot(m5),
+  a2 = above2(m5),
+  # render html report
   report = rmarkdown::render(
-    knitr_in("report.Rmd"),
-    output_file = file_out("report.html"),
+    input = "report.Rmd",
+    output_format = c("html_document", 
+                      "md_document"),
     quiet = TRUE
   )
 )

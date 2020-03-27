@@ -1,25 +1,96 @@
 ---
 title: "COVID-19 Moral Messaging: An Alternative Analysis"
 output: html_document
+always_allow_html: true
 ---
 
 ```{r options, echo=F}
 options(width = 500)
 ```
 
-Recently, Everett _et al._ published a [pre-print](https://psyarxiv.com/9yqs8) studying the effects of different moral messages on US participants' intentions to engage in protective-behaviour relating to COVID-19. With many countries around the world transitioning into full-lockdown status, this work is timely and important. It is also a testament to the power of open science: important scientific ideas can be disseminated quickly and efficiently. As of 27th March 2020, the pre-print has been downloaded 832 times (since 21st March 2020).
+Recently, Everett _et al._ published a [pre-print](https://psyarxiv.com/9yqs8) studying the effects of different moral messages on US participants' intentions to engage in protective-behaviour relating to COVID-19.
+
+```{r echo=F}
+twitterwidget::twitterwidget('1241038948551610368', height = 625)
+```
+
+With many countries around the world transitioning into full-lockdown status, this work is timely. It is also a testament to the power of open science: important scientific ideas can be disseminated quickly and efficiently. As of 27th March 2020, the pre-print has been downloaded 832 times (since 21st March 2020).
 
 Another advantage of open science is that it immediately allows other researchers access to raw data to conduct alternative analyses. I report such an alternative analysis here. This alternative analysis builds on the previous work in a number of ways:
 
-* _I treat outcome variables as ordinal._ This is crucial because treating ordinal variables as continuous can [inflate effect size estimates](https://psyarxiv.com/x8swp/). As the effect sizes are small in the original pre-print, it is important to see whether the effects hold when using ordinal regression. This technique is also preferred to standard regression when there are ceiling or floor effects, as there are in this dataset.
-* _I model participants and questions as random effects._ In order to generalise beyond this specific sample and the specific questions asked in the study, we need to follow a [random effects approach](https://psyarxiv.com/jqw35). This approach can also easily scale up to multi-country studies, as it allows us to nest individuals within countries: this is the [next step](https://twitter.com/mollycrockett/status/1241038972895272968) for the original research team.
+* _I treat the outcome variable as ordinal._ This is crucial because treating ordinal variables as continuous, as Everett _et al._ did, can [distort effect size estimates](https://psyarxiv.com/x8swp/). As the effect sizes are small in the original pre-print, it is important to see whether the effects hold when using ordinal regression. This technique is also preferred to standard regression when there are ceiling or floor effects, as there are in this dataset.
+* _I model participants and questions as random effects._ In order to generalise beyond this specific sample and the specific questions asked in the study, we need to follow a [random effects approach](https://psyarxiv.com/jqw35). This approach can also easily scale up to multi-country studies, as it allows us to nest individuals within countries: this is the [next step](https://twitter.com/mollycrockett/status/1241038972895272968) for the research team.
 
 But first, let's load the dataset in long-form.
 
 ```{r}
-
+# can access original data here: https://osf.io/f74sz/
+d <- readd(d)
+d %>% 
+  select(ID, message_condition, source_condition, behaviour, response) %>% 
+  head(n = 20)
 ```
 
+In particular, we're interested in the `response` column.
+
+```{r echo=F, warning=F, error=F}
+readd(response)
+```
+
+This is accumulated Likert-scale responses to four "behavioural intentions" questions after reading a social-media post with a particular moral message. The behavioural intentions questions are (1) washing hands, (2) avoiding public gatherings, (3) staying at home, and (4) sharing the social-media post. I have accumulated these responses into a single `response` column, as we can then model all the behavioural intentions questions at once, treating the different questions as random effects. As you can see from the histogram, the modal choice is 7 (extremely likely to act). This ceiling effect makes an ordinal approach to these data necessary.
+
+I focus on behavioural intentions for this analysis. In a between-subjects experiment, the original pre-print manipulated two variables. First, the source of the message was manipulated (from a citizen, or from a leader). Second, the type of message was manipulated (non-moral, deontological, virtue, utilitarian). The research aims to uncover whether responses differ in these different conditions.
+
+I fitted five Bayesian ordinal multilevel models to these data using the [_brms_ package](https://github.com/paul-buerkner/brms):
+
+* `m1` - Null model
+* `m2` - Main effect of source condition
+* `m3` - Main effect of message condition
+* `m4` - Interaction between source and message condition
+* `m5` - Interaction between source and message condition (with controls)
+
+These models include `response` as the ordinal DV, participant `ID` (1-1032) as a random intercept, and also `behaviour` (1-4) as another random intercept. Main effects and interactions for source and message are also included as random slopes within `behaviour`, meaning that each behaviour has its own effect of source and message.
+
+Before digging into the models, what does model comparison tell us? We use leave-one-out cross-validation to compare models.
+
+```{r eval=F}
+# only m1-m4, m5 has fewer data points due to listwise deletion
+loo_compare(m1, m2, m3, m4)
+```
+
+```{r echo=F}
+readd(loo)
+```
+
+None of the models differ from the null model, suggesting that the source or the moral framing of the message do not affect people's responses to questions about their behavioural intentions.
+
+Let's visualise the predictions of the interaction model `m4` to see this for ourselves.
+
+```{r echo=F, warning=F}
+readd(int)
+```
+
+The above plot lumps the four behavioural intentions together. However, one key finding from the original pre-print is that participants "reported significantly stronger intentions to share the deontological message" compared to the control condition. Let's visualise the posterior difference between non-moral and deontological messages for the post-sharing question specifically.
+
+```{r echo=F}
+readd(postShare)
+```
+
+`r round(readd(a1), 0)`% of the posterior distribution is above zero, which is not enough to claim that deontological messages encourage greater post-sharing over non-moral messages. This finding remains when including demographics controls (not shown here).
+
+Another finding from the paper is that, when including demographic controls, "deontological messages were more effective than virtue-based messages" at encouraging hand washing. We follow the same approach above to evaluate this claim.
+
+```{r echo=F}
+readd(handWash)
+```
+
+`r round(readd(a2), 0)`% of the posterior distribution is above zero, which again is not enough to claim that deontological messages encourage greater hand-washing over virtue-based messages.
+
+However, we do replicate the demographic effects from the original paper. Model `m5` reveals that US participants who are younger, male, white, _more_ educated, more conservative, and less religious are the ones that are less likely to engage in protective behaviours (not shown here).
+
+In sum, while I applaud the speedy efforts of Everett _et al._ to publish their pre-print on this important topic so quickly, unfortunately I do not think the data, when properly modelled, supports the conclusion that "focusing on duties and responsibilities toward family, friends and fellow citizens could be an effective strategy for convincing others to adopt behaviors that slow the spread of COVID-19 in the US" (see [this tweet](https://twitter.com/mollycrockett/status/1241038951613423619)). Maybe I will be proved wrong when this research is scaled up to include individuals from other countries. For these multi-country studies, I urge the researchers to build on the approach I have used here by: (1) using all the available data inside a single model, (2) correctly treating the DV as ordinal, and (3) nesting individuals within countries in a random effects framework (i.e. `(1 | Country/ID)`). This will help us make the kinds of broad generalisable inferences that this crisis requires of us.
+
+Code for this post can be found here: https://github.com/ScottClaessens/covidMoralMessaging
 
 # Session Info
 
